@@ -12,22 +12,38 @@ double dx, dy, dt, pcor, grav, dissip, hmoy, alpha, height, epsilon;
 bool file_export;
 std::string export_path;
 
-int main(int argc, char **argv) {
-  parse_args(argc, argv);
-  printf("Command line options parsed\n");
-  
-  alloc();
-  printf("Memory allocated\n");
- 
-  /*elle sert a initialiser l'image*/ 
-  gauss_init();
-  printf("State initialised\n");
+int id,p,w;
+MPI_Status status;
 
-  forward();
-  printf("State computed\n");
+int main(int argc, char **argv) {
+
+	MPI_Init(&argc,&argv);
+	MPI_Comm_size(MPI_COMM_WORLD,&p);
+	MPI_Comm_rank(MPI_COMM_WORLD,&id);
+
+	parse_args(argc, argv);
+	printf("Command line options parsed\n");
+
+	if(size_x%p){
+		if(!id){ /*si processus de rang 0*/
+			fprintf(stderr,"le nombre de processus ne divise pas la taille\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	w=size_x/p;
   
-  dealloc();
-  printf("Memory freed\n");
+	alloc();
+	printf("Memory allocated\n");
+ 
+	/*elle sert a initialiser l'image*/ 
+	gauss_init();
+	printf("State initialised\n");
+
+	forward();
+	printf("State computed\n");
   
-  return EXIT_SUCCESS;
+	dealloc();
+	printf("Memory freed\n");
+  
+	return EXIT_SUCCESS;
 }
