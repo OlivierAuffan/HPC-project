@@ -5,6 +5,7 @@
 #include <init.h>
 #include <forward.h>
 #include <export.h>
+#include <mpi.h>
 
 double *hFil, *uFil, *vFil, *hPhy, *uPhy, *vPhy;
 int size_x, size_y, nb_steps;

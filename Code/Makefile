@@ -1,4 +1,4 @@
-CXX=g++ -Wall -O3
+CXX=mpic++ -Wall -O3
 
 CPPFLAGS=-Iinc
 
@@ -11,13 +11,13 @@ BIN=bin/shalw
 all : $(BIN)
 
 $(BIN) : $(addprefix obj/, $(OBJECTS))
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) -g -o $@ $^ $(LDFLAGS)
 
 obj/%.o : src/%.cpp
-	$(CXX) -c -o $@ $^ $(CPPFLAGS)
+	$(CXX) -g -c -o $@ $^ $(CPPFLAGS)
 
 obj/%.o : src/%.c
-	$(CXX) -c -o $@ $^ $(CPPFLAGS)
+	$(CXX) -g -c -o $@ $^ $(CPPFLAGS)
 
 clean :
 	rm -f bin/* obj/*
