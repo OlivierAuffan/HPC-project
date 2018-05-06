@@ -42,9 +42,11 @@ int main(int argc, char **argv) {
 
 	forward();
 	printf("State computed\n");
-  
-	dealloc();
-	printf("Memory freed\n");
+
+	if(!id){  
+		dealloc();
+		printf("Memory freed\n");
+	}
   
 	return EXIT_SUCCESS;
 }
