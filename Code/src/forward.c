@@ -122,7 +122,6 @@ void forward(void) {
 	dt = svdt / 2.;
     }
 
-<<<<<<< HEAD
     if (t > 1) {
 	if (id > 0)
 	    {
@@ -152,10 +151,6 @@ void forward(void) {
     
     for (int j = start_y; j < end_y; j++) {
       for (int i = start_x; i < end_x; i++) {
-=======
-    for (int j = 0; j < size_y; j++) {
-      for (int i = 0; i < w; i++) {
->>>>>>> 7af82cdf57ff94e6a3794d1e0ea690a812094785
 	HPHY(t, i, j) = hPhy_forward(t, i, j);
 	UPHY(t, i, j) = uPhy_forward(t, i, j);
 	VPHY(t, i, j) = vPhy_forward(t, i, j);
