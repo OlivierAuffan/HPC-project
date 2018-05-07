@@ -5,6 +5,14 @@ extern double dx, dy, dt, pcor, grav, dissip, hmoy, alpha, height, epsilon;
 extern bool file_export;
 extern std::string export_path;
 
+extern int id, p;
+extern int band_size_x, band_size_y, band_size;
+extern int start_band_x, start_band_y, end_band_x, end_band_y;
+
+#define PRINT(message) \
+    if (id == 0) \
+	printf("%s", message);
+
 #define HFIL(t, i, j) hFil[ (j) +			\
 			    (i) * size_y +		\
 			    ((t)%2) * size_x * size_y ]

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <shalw.h>
 #include <export.h>
+#include <mpi.h>
 
 double hFil_forward(int t, int i, int j) {
   //Phase d'initialisation du filtre
@@ -118,11 +119,38 @@ void forward(void) {
       dt = 0;
     }
     if (t == 2){
-      dt = svdt / 2.;
+	dt = svdt / 2.;
     }
 
-    for (int j = 0; j < size_y; j++) {
-      for (int i = 0; i < size_x; i++) {
+    if (t > 1) {
+	if (id > 0)
+	    {
+		MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+			 id - 1, 0, MPI_COMM_WORLD, NULL);
+		MPI_Recv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+			 id - 1, 0, MPI_COMM_WORLD, NULL);
+		MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
+			 id - 1, 0, MPI_COMM_WORLD);
+	    }
+	if (id < p - 1)
+	    {
+		MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
+			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+		MPI_Send(&UPHY(t - 1, 0, band_size_y), band_size_x,
+			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+		MPI_Recv(&VPHY(t - 1, 0, band_size_y + 1),
+			 band_size_x, MPI_DOUBLE, id + 1, 0,
+			 MPI_COMM_WORLD, NULL);
+	    }
+    }
+
+    int start_x = 0;
+    int start_y = 1; // skip first extra line
+    int end_x   = band_size_x;
+    int end_y   = band_size_y + 1; // skip last extra line
+    
+    for (int j = start_y; j < end_y; j++) {
+      for (int i = start_x; i < end_x; i++) {
 	HPHY(t, i, j) = hPhy_forward(t, i, j);
 	UPHY(t, i, j) = uPhy_forward(t, i, j);
 	VPHY(t, i, j) = vPhy_forward(t, i, j);

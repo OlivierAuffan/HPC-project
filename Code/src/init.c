@@ -9,11 +9,18 @@ void gauss_init(void) {
   gsx = 25000 ;
   gsy = 25000 ;
 
-  for (int i = 0; i < size_x;  i++) {
-    for (int j = 0; j < size_y; j++) {
-      HFIL(0, i, j) = height *
-	(exp(- pow((i * dx - gmx) / gsx, 2) / 2.)) *
-	(exp(- pow((j * dy - gmy) / gsy, 2) / 2.)) ;
+  int start_x = start_band_x;
+  int start_y = start_band_y - 1; // one extra line en top
+  int end_x   = end_band_x;
+  int end_y   = end_band_y + 1; // one extra line en bottom
+
+  for (int i = start_x; i < end_x;  i++) {
+    for (int j = start_y; j < end_y; j++) {
+	if (i < 0 || j < 0 || i > size_x || j > size_y)
+	    continue;
+	HFIL(0, i - start_x, j - start_y) = height *
+	    (exp(- pow((i * dx - gmx) / gsx, 2) / 2.)) *
+	    (exp(- pow((j * dy - gmy) / gsy, 2) / 2.)) ;
     }
   }
 }
