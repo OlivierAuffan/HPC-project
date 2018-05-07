@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#include <shalw.h>
+#include "shalw.h"
 #include <export.h>
 #include <mpi.h>
 
@@ -50,11 +50,11 @@ double hPhy_forward(int t, int i, int j) {
 double uPhy_forward(int t, int i, int j) {
   double b, e, f, g;
   
-  if (i == w*(id+1) - 1)
+  if (i == size_x - 1)
     return 0.;
 
   b = 0.;
-  if (i < w - 1)
+  if (i < size_x - 1)
     b = HPHY(t - 1, i + 1, j);
 
   e = 0.;
@@ -62,11 +62,11 @@ double uPhy_forward(int t, int i, int j) {
     e = VPHY(t - 1, i, j + 1);
 
   f = 0.;
-  if (i < w - 1)
+  if (i < size_x - 1)
     f = VPHY(t - 1, i + 1, j);
 
   g = 0.;
-  if (i < w - 1 && j < size_y - 1)
+  if (i < size_x - 1 && j < size_y - 1)
     g = VPHY(t - 1, i + 1, j + 1);
 
   return UFIL(t - 1, i, j) +
@@ -122,41 +122,44 @@ void forward(void) {
 	dt = svdt / 2.;
     }
 
-    if (t > 1) {
-	if (id > 0)
-	    {
-		MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-			 id - 1, 0, MPI_COMM_WORLD, NULL);
-		MPI_Recv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-			 id - 1, 0, MPI_COMM_WORLD, NULL);
-		MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
-			 id - 1, 0, MPI_COMM_WORLD);
-	    }
-	if (id < p - 1)
-	    {
-		MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
-			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
-		MPI_Send(&UPHY(t - 1, 0, band_size_y), band_size_x,
-			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
-		MPI_Recv(&VPHY(t - 1, 0, band_size_y + 1),
-			 band_size_x, MPI_DOUBLE, id + 1, 0,
-			 MPI_COMM_WORLD, NULL);
-	    }
-    }
+    /* if (t > 1) { */
+    	if (id > 0)
+    	    {
+    		MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+    			 id - 1, 0, MPI_COMM_WORLD, NULL);
+    		MPI_Recv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+    			 id - 1, 0, MPI_COMM_WORLD, NULL);
+    		MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
+    			 id - 1, 0, MPI_COMM_WORLD);
+    	    }
+    	if (id < p - 1)
+    	    {
+    		MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
+    			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+    		MPI_Send(&UPHY(t - 1, 0, band_size_y), band_size_x,
+    			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+    		MPI_Recv(&VPHY(t - 1, 0, band_size_y + 1),
+    			 band_size_x, MPI_DOUBLE, id + 1, 0,
+    			 MPI_COMM_WORLD, NULL);
+    	    }
+    /* } */
 
     int start_x = 0;
     int start_y = 1; // skip first extra line
     int end_x   = band_size_x;
     int end_y   = band_size_y + 1; // skip last extra line
+
+    if (id == 1)
+	printf("%d %d | %d %d\n", start_x, start_y, end_x, end_y);
     
     for (int j = start_y; j < end_y; j++) {
       for (int i = start_x; i < end_x; i++) {
-	HPHY(t, i, j) = hPhy_forward(t, i, j);
-	UPHY(t, i, j) = uPhy_forward(t, i, j);
-	VPHY(t, i, j) = vPhy_forward(t, i, j);
-	HFIL(t, i, j) = hFil_forward(t, i, j);
-	UFIL(t, i, j) = uFil_forward(t, i, j);
-	VFIL(t, i, j) = vFil_forward(t, i, j);
+    	  HPHY(t, i, j) = hPhy_forward(t, i, j);
+    	  UPHY(t, i, j) = uPhy_forward(t, i, j);
+    	  VPHY(t, i, j) = vPhy_forward(t, i, j);
+    	  HFIL(t, i, j) = hFil_forward(t, i, j);
+    	  UFIL(t, i, j) = uFil_forward(t, i, j);
+    	  VFIL(t, i, j) = vFil_forward(t, i, j);
       }
     }
 

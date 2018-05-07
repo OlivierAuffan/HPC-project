@@ -14,6 +14,8 @@ void gauss_init(void) {
   int end_x   = end_band_x;
   int end_y   = end_band_y + 1; // one extra line en bottom
 
+  printf("-------------------------- %d %d\n", size_x, size_y);
+  
   for (int i = start_x; i < end_x;  i++) {
     for (int j = start_y; j < end_y; j++) {
 	if (i < 0 || j < 0 || i > size_x || j > size_y)

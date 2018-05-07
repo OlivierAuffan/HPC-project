@@ -18,6 +18,7 @@ MPI_Status status;
 
 int band_size_x, band_size_y, band_size;
 int start_band_x, start_band_y, end_band_x, end_band_y;
+int buffer_size;
 
 int main(int argc, char **argv) {
 
@@ -26,10 +27,10 @@ int main(int argc, char **argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD,&id);
 
 	parse_args(argc, argv);
-	PRINT("Command line options parsed\n");
+	printf("Command line options parsed\n");
 
 	if(size_y % p){
-	    PRINT("le nombre de processus ne divise pas la taille\n");
+	    printf("le nombre de processus ne divise pas la taille\n");
 	    exit(EXIT_FAILURE);
 	}
 
@@ -41,19 +42,21 @@ int main(int argc, char **argv) {
 	start_band_y = id * band_size_y;
 	end_band_x = band_size_x;
 	end_band_y = (id + 1) * band_size_y;
-	
-	alloc();
-	PRINT("Memory allocated\n");
- 
-	/*elle sert a initialiser l'image*/ 
-	gauss_init();
-	PRINT("State initialised\n");
 
+	alloc();
+	printf("%d Memory allocated\n", id);
+ 
+	// /*elle sert a initialiser l'image*/ 
+	gauss_init();
+	printf("%d State initialised\n", id);
+	
 	forward();
-	PRINT("State computed\n");
+	printf("%d State computed\n", id);
   
 	dealloc();
-	PRINT("Memory freed\n");
-  
+	printf("%d Memory freed\n", id);
+
+	MPI_Finalize();
+	
 	return EXIT_SUCCESS;
 }
