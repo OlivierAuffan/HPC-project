@@ -50,11 +50,11 @@ double hPhy_forward(int t, int i, int j) {
 double uPhy_forward(int t, int i, int j) {
   double b, e, f, g;
   
-  if (i == size_x - 1)
+  if (i == w*(id+1) - 1)
     return 0.;
 
   b = 0.;
-  if (i < size_x - 1)
+  if (i < w - 1)
     b = HPHY(t - 1, i + 1, j);
 
   e = 0.;
@@ -62,11 +62,11 @@ double uPhy_forward(int t, int i, int j) {
     e = VPHY(t - 1, i, j + 1);
 
   f = 0.;
-  if (i < size_x - 1)
+  if (i < w - 1)
     f = VPHY(t - 1, i + 1, j);
 
   g = 0.;
-  if (i < size_x - 1 && j < size_y - 1)
+  if (i < w - 1 && j < size_y - 1)
     g = VPHY(t - 1, i + 1, j + 1);
 
   return UFIL(t - 1, i, j) +
@@ -122,6 +122,7 @@ void forward(void) {
 	dt = svdt / 2.;
     }
 
+<<<<<<< HEAD
     if (t > 1) {
 	if (id > 0)
 	    {
@@ -151,6 +152,10 @@ void forward(void) {
     
     for (int j = start_y; j < end_y; j++) {
       for (int i = start_x; i < end_x; i++) {
+=======
+    for (int j = 0; j < size_y; j++) {
+      for (int i = 0; i < w; i++) {
+>>>>>>> 7af82cdf57ff94e6a3794d1e0ea690a812094785
 	HPHY(t, i, j) = hPhy_forward(t, i, j);
 	UPHY(t, i, j) = uPhy_forward(t, i, j);
 	VPHY(t, i, j) = vPhy_forward(t, i, j);

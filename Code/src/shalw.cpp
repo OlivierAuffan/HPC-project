@@ -50,10 +50,19 @@ int main(int argc, char **argv) {
 	PRINT("State initialised\n");
 
 	forward();
+<<<<<<< HEAD
 	PRINT("State computed\n");
   
 	dealloc();
 	PRINT("Memory freed\n");
+=======
+	printf("State computed\n");
+
+	if(!id){  
+		dealloc();
+		printf("Memory freed\n");
+	}
+>>>>>>> 7af82cdf57ff94e6a3794d1e0ea690a812094785
   
 	return EXIT_SUCCESS;
 }
