@@ -1,5 +1,8 @@
-#include <stdio.h>
+#ifndef EXPORT_H
+#define EXPORT_H
 
-FILE *create_file(void);
-void export_step(FILE*, int);
-void finalize_export(FILE*);
+void create_file(void);
+void export_step(int);
+void finalize_export(void);
+
+#endif

@@ -8,7 +8,7 @@ extern std::string export_path;
 extern int id, p;
 extern int band_size_x, band_size_y, band_size;
 extern int start_band_x, start_band_y, end_band_x, end_band_y;
-extern int buffer_size;
+extern int size, buffer_size;
 
 #define PRINT(message) \
     if (id == 0) \

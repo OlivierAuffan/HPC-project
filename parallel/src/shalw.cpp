@@ -18,7 +18,7 @@ MPI_Status status;
 
 int band_size_x, band_size_y, band_size;
 int start_band_x, start_band_y, end_band_x, end_band_y;
-int buffer_size;
+int size, buffer_size;
 
 int main(int argc, char **argv) {
 
@@ -43,6 +43,8 @@ int main(int argc, char **argv) {
 	end_band_x = band_size_x;
 	end_band_y = (id + 1) * band_size_y;
 
+	size = size_x * size_y;
+	
 	alloc();
 	printf("%d Memory allocated\n", id);
  

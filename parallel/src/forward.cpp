@@ -1,178 +1,241 @@
-#include <stdio.h>
 #include <math.h>
-#include "shalw.h"
-#include <export.h>
 #include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-double hFil_forward(int t, int i, int j) {
-  //Phase d'initialisation du filtre
-  //HPHY(t - 1, i, j) est encore nul
-  if (t <= 2)
-    return HPHY(t, i, j);
-  return HPHY(t - 1, i, j) +
-    alpha * (HFIL(t - 1, i, j) - 2 * HPHY(t - 1, i, j) + HPHY(t, i, j));
+#include "export.h"
+#include "forward.h"
+#include "shalw.h"
+
+
+double hFil_forward(int t, int i, int j)
+{
+	// Phase d'initialisation du filtre
+	// HPHY(t - 1, i, j) est encore nul
+	if (t <= 2)
+		return HPHY(t, i, j);
+	return HPHY(t - 1, i, j) +
+		   alpha * (HFIL(t - 1, i, j) - 2 * HPHY(t - 1, i, j) + HPHY(t, i, j));
 }
 
-double uFil_forward(int t, int i, int j) {
-  //Phase d'initialisation du filtre
-  //UPHY(t - 1, i, j) est encore nul
-  if (t <= 2)
-    return UPHY(t, i, j);
-  return UPHY(t - 1, i, j) +
-    alpha * (UFIL(t - 1, i, j) - 2 * UPHY(t - 1, i, j) + UPHY(t, i, j));
+double uFil_forward(int t, int i, int j)
+{
+	// Phase d'initialisation du filtre
+	// UPHY(t - 1, i, j) est encore nul
+	if (t <= 2)
+		return UPHY(t, i, j);
+	return UPHY(t - 1, i, j) +
+		   alpha * (UFIL(t - 1, i, j) - 2 * UPHY(t - 1, i, j) + UPHY(t, i, j));
 }
 
-double vFil_forward(int t, int i, int j) {
-  //Phase d'initialisation du filtre
-  //VPHY(t - 1, i, j) est encore nul
-  if (t <= 2)
-    return VPHY(t, i, j);
-  return VPHY(t - 1, i, j) +
-    alpha * (VFIL(t - 1, i, j) - 2 * VPHY(t - 1, i, j) + VPHY(t, i, j));
+double vFil_forward(int t, int i, int j)
+{
+	// Phase d'initialisation du filtre
+	// VPHY(t - 1, i, j) est encore nul
+	if (t <= 2)
+		return VPHY(t, i, j);
+	return VPHY(t - 1, i, j) +
+		   alpha * (VFIL(t - 1, i, j) - 2 * VPHY(t - 1, i, j) + VPHY(t, i, j));
 }
 
-double hPhy_forward(int t, int i, int j) {
-  double c, d;
-  
-  c = 0.;
-  if (i > 0)
-    c = UPHY(t - 1, i - 1, j);
+double hPhy_forward(int t, int i, int j)
+{
+	double c, d;
 
-  d = 0.;
-  if (j < size_y - 1)
-    d = VPHY(t - 1, i, j + 1);
+	c = 0.;
+	if (i > 0)
+		c = UPHY(t - 1, i - 1, j);
 
-  return HFIL(t - 1, i, j) -
-    dt * hmoy * ((UPHY(t - 1, i, j) - c) / dx +
-		 (d - VPHY(t - 1, i, j)) / dy);
+	d = 0.;
+	if (j < size_y - 1)
+		d = VPHY(t - 1, i, j + 1);
+
+	return HFIL(t - 1, i, j) -
+		   dt * hmoy *
+			   ((UPHY(t - 1, i, j) - c) / dx + (d - VPHY(t - 1, i, j)) / dy);
 }
 
-double uPhy_forward(int t, int i, int j) {
-  double b, e, f, g;
-  
-  if (i == size_x - 1)
-    return 0.;
+double uPhy_forward(int t, int i, int j)
+{
+	double b, e, f, g;
 
-  b = 0.;
-  if (i < size_x - 1)
-    b = HPHY(t - 1, i + 1, j);
+	if (i == size_x - 1)
+		return 0.;
 
-  e = 0.;
-  if (j < size_y - 1)
-    e = VPHY(t - 1, i, j + 1);
+	b = 0.;
+	if (i < size_x - 1)
+		b = HPHY(t - 1, i + 1, j);
 
-  f = 0.;
-  if (i < size_x - 1)
-    f = VPHY(t - 1, i + 1, j);
+	e = 0.;
+	if (j < size_y - 1)
+		e = VPHY(t - 1, i, j + 1);
 
-  g = 0.;
-  if (i < size_x - 1 && j < size_y - 1)
-    g = VPHY(t - 1, i + 1, j + 1);
+	f = 0.;
+	if (i < size_x - 1)
+		f = VPHY(t - 1, i + 1, j);
 
-  return UFIL(t - 1, i, j) +
-    dt * ((-grav / dx) * (b - HPHY(t - 1, i, j)) +
-	  (pcor / 4.) * (VPHY(t - 1, i, j) + e + f + g) -
-	  (dissip * UFIL(t - 1, i, j)));
+	g = 0.;
+	if (i < size_x - 1 && j < size_y - 1)
+		g = VPHY(t - 1, i + 1, j + 1);
+
+	return UFIL(t - 1, i, j) +
+		   dt * ((-grav / dx) * (b - HPHY(t - 1, i, j)) +
+				 (pcor / 4.) * (VPHY(t - 1, i, j) + e + f + g) -
+				 (dissip * UFIL(t - 1, i, j)));
 }
 
-double vPhy_forward(int t, int i, int j) {
-  double c, d, e, f;
+double vPhy_forward(int t, int i, int j)
+{
+	double c, d, e, f;
 
-  if (j == 0)
-    return 0.;
+	if (j == 0)
+		return 0.;
 
-  c = 0.;
-  if (j > 0)
-    c = HPHY(t - 1, i, j - 1);
+	c = 0.;
+	if (j > 0)
+		c = HPHY(t - 1, i, j - 1);
 
-  d = 0.;
-  if (i > 0 && j > 0)
-    d = UPHY(t - 1, i -1, j -1);
+	d = 0.;
+	if (i > 0 && j > 0)
+		d = UPHY(t - 1, i - 1, j - 1);
 
-  e = 0.;
-  if (i > 0)
-    e = UPHY(t - 1, i - 1, j);
+	e = 0.;
+	if (i > 0)
+		e = UPHY(t - 1, i - 1, j);
 
-  f = 0.;
-  if (j > 0)
-    f = UPHY(t - 1, i, j - 1);
+	f = 0.;
+	if (j > 0)
+		f = UPHY(t - 1, i, j - 1);
 
-  return VFIL(t - 1, i, j) +
-    dt * ((-grav / dy) * (HPHY(t - 1, i, j) - c) -
-	  (pcor / 4.) * (d + e + f + UPHY(t - 1, i, j)) -
-	  (dissip * VFIL(t - 1, i, j)));
+	return VFIL(t - 1, i, j) +
+		   dt * ((-grav / dy) * (HPHY(t - 1, i, j) - c) -
+				 (pcor / 4.) * (d + e + f + UPHY(t - 1, i, j)) -
+				 (dissip * VFIL(t - 1, i, j)));
 }
 
-void forward(void) {
-  FILE *file = NULL;
-  double svdt = 0.;
-  int t = 0;
-  
-  if (file_export) {
-    file = create_file();
-    export_step(file, t);
-  }
-    
-  for (t = 1; t < nb_steps; t++) {
-    if (t == 1) {
-      svdt = dt;
-      dt = 0;
-    }
-    if (t == 2){
-	dt = svdt / 2.;
-    }
+void FORWARD(int t, int i, int j)
+{
+	HPHY(t, i, j) = hPhy_forward(t, i, j);
+	HFIL(t, i, j) = hFil_forward(t, i, j);
 
-    /* if (t > 1) { */
-    	if (id > 0)
-    	    {
-    		MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-    			 id - 1, 0, MPI_COMM_WORLD, NULL);
-    		MPI_Recv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-    			 id - 1, 0, MPI_COMM_WORLD, NULL);
-    		MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
-    			 id - 1, 0, MPI_COMM_WORLD);
-    	    }
-    	if (id < p - 1)
-    	    {
-    		MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
-    			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
-    		MPI_Send(&UPHY(t - 1, 0, band_size_y), band_size_x,
-    			 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
-    		MPI_Recv(&VPHY(t - 1, 0, band_size_y + 1),
-    			 band_size_x, MPI_DOUBLE, id + 1, 0,
-    			 MPI_COMM_WORLD, NULL);
-    	    }
-    /* } */
+	UPHY(t, i, j) = uPhy_forward(t, i, j);
+	UFIL(t, i, j) = uFil_forward(t, i, j);
 
-    int start_x = 0;
-    int start_y = 1; // skip first extra line
-    int end_x   = band_size_x;
-    int end_y   = band_size_y + 1; // skip last extra line
+	VPHY(t, i, j) = vPhy_forward(t, i, j);
+	VFIL(t, i, j) = vFil_forward(t, i, j);
+}
 
-    if (id == 1)
-	printf("%d %d | %d %d\n", start_x, start_y, end_x, end_y);
-    
-    for (int j = start_y; j < end_y; j++) {
-      for (int i = start_x; i < end_x; i++) {
-    	  HPHY(t, i, j) = hPhy_forward(t, i, j);
-    	  UPHY(t, i, j) = uPhy_forward(t, i, j);
-    	  VPHY(t, i, j) = vPhy_forward(t, i, j);
-    	  HFIL(t, i, j) = hFil_forward(t, i, j);
-    	  UFIL(t, i, j) = uFil_forward(t, i, j);
-    	  VFIL(t, i, j) = vFil_forward(t, i, j);
-      }
-    }
+// Cette fonction est longue et concentre les versions bandes/blocks
+// sync/async pour factoriser le code et bien comprendre ce que ces modes
+// impliquent sur une version standard. Ne pas hésiter à masquer des boucles
+// ou des branchements dans un éditeur de code pour avoir un aperçu global
+// de la fonction.
+void forward(void)
+{
+	double svdt		 = 0.;
+	int	t		 = 0;
+	// double total_msg = 0, total_calc = 0, total_export = 0;
 
-    if (file_export) {
-      export_step(file, t);
-    }
-    
-    if (t == 2) {
-      dt = svdt;
-    }
-  }
+	// Special type MPI to exchange array columns
+	MPI_Datatype column;
+	MPI_Type_vector(band_size_y, 1, band_size_x + 2, MPI_DOUBLE, &column);
+	MPI_Type_commit(&column);
 
-  if (file_export) {
-    finalize_export(file);
-  }
+	// Requests for async mode
+	// MPI_Request r[8], s[8];
+	// for (int i = 0; i < 8; i++)
+	// {
+	// 	r[i] = MPI_REQUEST_NULL;
+	// 	s[i] = MPI_REQUEST_NULL;
+	// }
+
+	if (file_export)
+		create_file();
+
+	// t = 0 is the initial state already in memory by gauss_init
+	for (t = 1; t < nb_steps; t++) // we talk about t iterations but actually we
+								   // calculate only t - 1 times
+	{
+		if (t == 1)
+		{
+			svdt = dt;
+			dt   = 0;
+		}
+		if (t == 2)
+			dt = svdt / 2.;
+
+		if (file_export)
+		{
+			// clock_t start_export = clock();
+			export_step(t - 1); // t - 1 is ready to export
+			// total_export += TIME(start_export, clock());
+		}
+		// recouvrement par le calcul en async
+
+		// ECHANGE DE LIGNES
+		// à l'instant t, la grille t-1 est calculée, on peut donc échanger les
+		// lignes de t - 1
+		// clock_t start_msg = clock();
+		if (t > 1)
+		    {
+			// Echange id-1 <=> id
+			if (id > 0)
+			    {
+				MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+					 id - 1, 0, MPI_COMM_WORLD, NULL);
+				MPI_Recv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+					 id - 1, 0, MPI_COMM_WORLD, NULL);
+				MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
+					 id - 1, 0, MPI_COMM_WORLD);
+			    }
+
+			// Echange id <=> id+1
+			if (id < p - 1)
+			    {
+				MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
+					 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+				MPI_Send(&UPHY(t - 1, 0, band_size_y), band_size_x,
+					 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+				MPI_Recv(&VPHY(t - 1, 0, band_size_y + 1),
+					 band_size_x, MPI_DOUBLE, id + 1, 0,
+					 MPI_COMM_WORLD, NULL);
+			    }
+		    }
+
+		// total_msg += TIME(start_msg, clock());
+
+		// CALCULATIONS PREPARATION
+		int start_x = 0;
+		int start_y = 1; // skip first extra line
+		int end_x   = band_size_x;
+		int end_y   = band_size_y + 1; // skip last extra line
+
+		// HERE ARE MOST CALCULATIONS for t
+		// Peut facilement être parallélisé avec OpenMP
+		// if async mode, messages are exchanged at the same time
+		// clock_t start_calc = clock();
+		for (int y = start_y; y < end_y; y++)
+			for (int x = start_x; x < end_x; x++)
+				FORWARD(t, x, y);
+		// total_calc += TIME(start_calc, clock());
+
+		if (t == 2)
+			dt = svdt;
+	}
+
+	if (file_export)
+	{
+		// clock_t start_export = clock();
+		export_step(t - 1); // final iteration ready to export
+		finalize_export();
+		// total_export += TIME(start_export, clock());
+	}
+
+	// ID0_(printf("	Message exchange : %.2f\n", total_msg))
+	// ID0_(printf("	Calculations : %.2f\n", total_calc))
+	// if (file_export)
+	// {
+	// 	ID0_(printf("	Export : %.2f\n", total_export))
+	// }
+	MPI_Barrier(MPI_COMM_WORLD);
 }
