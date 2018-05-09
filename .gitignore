@@ -1,2 +1,6 @@
-*~
-*.o
+bin
+obj
+.vscode
+
+hostfile
+times.csv

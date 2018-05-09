@@ -13,7 +13,7 @@ def displayFile(fname):
     N = int(searchObj.group(3))
     T = int(searchObj.group(4))
     # lecture binaire suivant l'ordre de stockage des
-    # elements d'un tableau multi-dimensionnel en C : 
+    # éléments d'un tableau multi-dimensionnel en C : 
     x = np.fromfile(fname,np.float64,T*N*N,"")
     x.shape = (T,N,N)
     #np.set_printoptions(precision=15)
