@@ -17,8 +17,6 @@ times: hostfile parallel
 	@echo -n "" > times.csv
 	@$(TIME) $(MAKE) NODES=$(NODES) -C parallel $(TEST)
 	@$(TIME) $(MAKE) NODES=$(NODES) MODE=--async -C parallel $(TEST)
-	@$(TIME) $(MAKE) NODES=$(NODES) MODE=--block -C parallel $(TEST)
-	@$(TIME) $(MAKE) NODES=$(NODES) MODE="--block --async" -C parallel $(TEST)
 	@cat times.csv
 
 hostfile:

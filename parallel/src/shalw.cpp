@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <shalw.h>
 #include <parse_args.hpp>
 #include <memory.h>
