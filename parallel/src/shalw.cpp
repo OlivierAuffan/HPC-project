@@ -11,7 +11,7 @@
 double *hFil, *uFil, *vFil, *hPhy, *uPhy, *vPhy;
 int size_x, size_y, nb_steps;
 double dx, dy, dt, pcor, grav, dissip, hmoy, alpha, height, epsilon;
-bool file_export;
+bool file_export, async;
 std::string export_path;
 
 int id, p;

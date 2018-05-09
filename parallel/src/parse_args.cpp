@@ -22,7 +22,7 @@ void parse_args(int argc, char **argv) {
     ("hmoy", po::value<double>()->default_value(100), "hmoy")
     ("hinit", po::value<double>()->default_value(15), "Height of the initial state")
     ("export", "Export state of hFil")
-    ("export-path", po::value<std::string>()->default_value("."), "Path for the export");
+    ("export-path", po::value<std::string>()->default_value("."), "Path for the export")("async", "Enable asynchronous communications");
 
   po::variables_map vars;
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vars);
@@ -49,4 +49,6 @@ void parse_args(int argc, char **argv) {
   if (vars.count("export"))
     file_export = true;
   export_path = vars["export-path"].as<std::string>();
+  if (vars.count("async"))
+	  async = true;
 }
