@@ -28,10 +28,10 @@ int main(int argc, char **argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD,&id);
 
 	parse_args(argc, argv);
-	printf("Command line options parsed\n");
+	PRINT("Command line options parsed\n");
 
 	if(size_y % p){
-	    printf("le nombre de processus ne divise pas la taille\n");
+	    PRINT("le nombre de processus ne divise pas la taille\n");
 	    exit(EXIT_FAILURE);
 	}
 
@@ -47,17 +47,17 @@ int main(int argc, char **argv) {
 	size = size_x * size_y;
 	
 	alloc();
-	printf("%d Memory allocated\n", id);
+	PRINT("Memory allocated\n");
  
 	// /*elle sert a initialiser l'image*/ 
 	gauss_init();
-	printf("%d State initialised\n", id);
+	PRINT("State initialised\n");
 	
 	forward();
-	printf("%d State computed\n", id);
+	PRINT("State computed\n");
   
 	dealloc();
-	printf("%d Memory freed\n", id);
+	PRINT("Memory freed\n");
 
 	MPI_Finalize();
 	

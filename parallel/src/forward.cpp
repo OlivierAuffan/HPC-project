@@ -142,8 +142,8 @@ void forward(void)
     MPI_Type_commit(&column);
 
     // Requests for async mode
-    MPI_Request r[8], s[8];
-    for (int i = 0; i < 8; i++) {
+    MPI_Request r[3], s[3];
+    for (int i = 0; i < 3; i++) {
 	r[i] = MPI_REQUEST_NULL;
 	s[i] = MPI_REQUEST_NULL;
     }
@@ -244,7 +244,7 @@ void forward(void)
 	    // We need these receptions before finish calculations
 	    // Should already be finished
 	    // clock_t start_msg = clock();
-	    MPI_Waitall(8, r, MPI_STATUSES_IGNORE); // Attente réception bords
+	    MPI_Waitall(3, r, MPI_STATUSES_IGNORE); // Attente réception bords
 	    // total_msg += TIME(start_msg, clock());
 	    
 	    // On fini les calculs des bords
@@ -259,7 +259,7 @@ void forward(void)
 	    
 	    // No need to wait before for these before calculations
 	    // start_msg = clock();
-	    MPI_Waitall(8, s, MPI_STATUSES_IGNORE); // Attente envoi bords
+	    MPI_Waitall(3, s, MPI_STATUSES_IGNORE); // Attente envoi bords
 	    // total_msg += TIME(start_msg, clock());
 	    // All messages have been exchanged : we can start new ones
 	}
