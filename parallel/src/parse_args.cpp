@@ -51,4 +51,7 @@ void parse_args(int argc, char **argv) {
   export_path = vars["export-path"].as<std::string>();
   if (vars.count("async"))
 	  async = true;
+  if (vars.count("hybrid"))
+	  hybrid = true;
+  
 }

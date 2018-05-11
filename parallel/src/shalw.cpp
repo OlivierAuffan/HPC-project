@@ -11,7 +11,7 @@
 double *hFil, *uFil, *vFil, *hPhy, *uPhy, *vPhy;
 int size_x, size_y, nb_steps;
 double dx, dy, dt, pcor, grav, dissip, hmoy, alpha, height, epsilon;
-bool file_export, async;
+bool file_export, async, hybrid;
 std::string export_path;
 
 int id, p;
@@ -23,10 +23,16 @@ int size, buffer_size;
 
 int main(int argc, char **argv) {
 
-	MPI_Init(&argc,&argv);
+	int mode;
+	
+	if (hybrid)
+		MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mode);
+	else
+		MPI_Init(&argc,&argv);
+			
 	MPI_Comm_size(MPI_COMM_WORLD,&p);
 	MPI_Comm_rank(MPI_COMM_WORLD,&id);
-
+	
 	parse_args(argc, argv);
 	PRINT("Command line options parsed\n");
 

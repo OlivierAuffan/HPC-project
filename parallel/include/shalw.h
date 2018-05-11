@@ -2,7 +2,7 @@
 extern double *hFil, *uFil, *vFil, *hPhy, *uPhy, *vPhy;
 extern int size_x, size_y, nb_steps,w;
 extern double dx, dy, dt, pcor, grav, dissip, hmoy, alpha, height, epsilon;
-extern bool file_export, async;
+extern bool file_export, async, hybrid;
 extern std::string export_path;
 
 extern int id, p;

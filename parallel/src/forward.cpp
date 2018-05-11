@@ -2,11 +2,10 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <omp.h>
 #include "export.h"
 #include "forward.h"
 #include "shalw.h"
-
 
 double hFil_forward(int t, int i, int j)
 {
@@ -234,6 +233,7 @@ void forward(void)
 	// Peut facilement être parallélisé avec OpenMP
 	// if async mode, messages are exchanged at the same time
 	// clock_t start_calc = clock();
+	#pragma omp parallel
 	for (int y = start_y; y < end_y; y++)
 	    for (int x = start_x; x < end_x; x++)
 		FORWARD(t, x, y);
