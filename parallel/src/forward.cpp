@@ -131,16 +131,13 @@ void FORWARD(int t, int i, int j)
 // de la fonction.
 void forward(void)
 {
-    double svdt		 = 0.;
-    int	t		 = 0;
-    // double total_msg = 0, total_calc = 0, total_export = 0;
+    double svdt	= 0.;
+    int	t = 0;
 
-    // Special type MPI to exchange array columns
     MPI_Datatype column;
     MPI_Type_vector(band_size_y, 1, band_size_x + 2, MPI_DOUBLE, &column);
     MPI_Type_commit(&column);
 
-    // Requests for async mode
     MPI_Request r[3], s[3];
     for (int i = 0; i < 3; i++) {
 	r[i] = MPI_REQUEST_NULL;
@@ -150,9 +147,7 @@ void forward(void)
     if (file_export)
 	create_file();
     
-    // t = 0 is the initial state already in memory by gauss_init
-    for (t = 1; t < nb_steps; t++) {// we talk about t iterations but actually we
-	// calculate only t - 1 times
+    for (t = 1; t < nb_steps; t++) {
 	if (t == 1) {
 	    svdt = dt;
 	    dt   = 0;
@@ -161,19 +156,11 @@ void forward(void)
 	    dt = svdt / 2.;
 
 	if (file_export) {
-	    // clock_t start_export = clock();
-	    export_step(t - 1); // t - 1 is ready to export
-	    // total_export += TIME(start_export, clock());
+	    export_step(t - 1);
 	}
-	// recouvrement par le calcul en async
 
-	// ECHANGE DE LIGNES
-	// à l'instant t, la grille t-1 est calculée, on peut donc échanger les
-	// lignes de t - 1
-	// clock_t start_msg = clock();
 	if (t > 1) {
 	    if (async) {
-		// Echange id-1 <=> id
 		if (id > 0) {
 		    MPI_Irecv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
 			      id - 1, 0, MPI_COMM_WORLD, r);
@@ -182,7 +169,6 @@ void forward(void)
 		    MPI_Isend(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
 			      id - 1, 0, MPI_COMM_WORLD, s);
 		}
-		// Echange id <=> id+1
 		if (id < p - 1) {
 		    MPI_Isend(&HPHY(t - 1, 0, band_size_y), band_size_x,
 			      MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 1);
@@ -194,7 +180,6 @@ void forward(void)
 		}
 	    }
 	    else {
-		// Echange id-1 <=> id
 		if (id > 0) {
 		    MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
 			     id - 1, 0, MPI_COMM_WORLD, NULL);
@@ -203,8 +188,6 @@ void forward(void)
 		    MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
 			     id - 1, 0, MPI_COMM_WORLD);
 		}
-		
-		// Echange id <=> id+1
 		if (id < p - 1) {
 		    MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
 			     MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
@@ -216,52 +199,33 @@ void forward(void)
 		}
 	    }
 	}
-	// total_msg += TIME(start_msg, clock());
-	    
-	// CALCULATIONS PREPARATION
+	
 	int start_x = 0;
-	int start_y = 1; // skip first extra line
+	int start_y = 1;
 	int end_x   = band_size_x;
-	int end_y   = band_size_y + 1; // skip last extra line
-	    
-	if (async) {// we have to reduce block by 1 line for each sides
-	    start_y += 1; // no calculations for first line
-	    end_y -= 1; // no calculations for last line
-	}
-	    
-	// HERE ARE MOST CALCULATIONS for t
-	// Peut facilement être parallélisé avec OpenMP
-	// if async mode, messages are exchanged at the same time
-	// clock_t start_calc = clock();
-	#pragma omp parallel
-	for (int y = start_y; y < end_y; y++)
-	    for (int x = start_x; x < end_x; x++)
-		FORWARD(t, x, y);
-	// total_calc += TIME(start_calc, clock());
+	int end_y   = band_size_y + 1;
 	    
 	if (async) {
-	    // Vérifier échange des bords t-1 avant de finir les calculs
-	    // We need these receptions before finish calculations
-	    // Should already be finished
-	    // clock_t start_msg = clock();
-	    MPI_Waitall(3, r, MPI_STATUSES_IGNORE); // Attente réception bords
-	    // total_msg += TIME(start_msg, clock());
-	    
-	    // On fini les calculs des bords
+	    start_y += 1;
+	    end_y -= 1;
+	}
+
+	// PARALLEL OMP
+        #pragma omp parallel for
+	for (int y = start_y; y < end_y; y++)
+		for (int x = start_x; x < end_x; x++)
+			FORWARD(t, x, y);
+	   
+	if (async) {
+	    MPI_Waitall(3, r, MPI_STATUSES_IGNORE);
+
 	    start_x -= 1;
 	    end_x += 1;
-	    // clock_t start_calc = clock();
 	    for (int x = start_x; x < end_x; x++) {
-		FORWARD(t, x, 1);			 // first calculation line
-		FORWARD(t, x, band_size_y); // last calculation line
+		FORWARD(t, x, 1);
+		FORWARD(t, x, band_size_y);
 	    }
-	    // total_calc += TIME(start_calc, clock());
-	    
-	    // No need to wait before for these before calculations
-	    // start_msg = clock();
-	    MPI_Waitall(3, s, MPI_STATUSES_IGNORE); // Attente envoi bords
-	    // total_msg += TIME(start_msg, clock());
-	    // All messages have been exchanged : we can start new ones
+	    MPI_Waitall(3, s, MPI_STATUSES_IGNORE);
 	}
 	    
 	if (t == 2)
@@ -269,17 +233,9 @@ void forward(void)
 	
     
 	if (file_export) {
-	    // clock_t start_export = clock();
-	    export_step(t - 1); // final iteration ready to export
+	    export_step(t - 1);
 	    finalize_export();
-	    // total_export += TIME(start_export, clock());
 	}
-    
-	// ID0_(printf("	Message exchange : %.2f\n", total_msg))
-	//     ID0_(printf("	Calculations : %.2f\n", total_calc))
-	// if (file_export) {
-	//     ID0_(printf("	Export : %.2f\n", total_export))
-	// 	}
 	
 	MPI_Barrier(MPI_COMM_WORLD);
     }

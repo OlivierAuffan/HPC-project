@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import numpy as np
 import re
@@ -12,8 +12,6 @@ def saveLastStep(fname):
     M = int(searchObj.group(2))
     N = int(searchObj.group(3))
     T = int(searchObj.group(4))
-    # lecture binaire suivant l'ordre de stockage des
-    # éléments d'un tableau multi-dimensionnel en C : 
     x = np.fromfile(fname,np.float64,T*N*N,"")
     x.shape = (T,N,N)
     ims = []

@@ -37,7 +37,7 @@ test2: rep bin/$(TARGET)
 	$(EX) $(EXFLAGS) bin/$(TARGET) -x 8192 -y 8192 -t 20 $(MODE)
 
 test3: rep bin/$(TARGET)
-	$(EX) $(EXFLAGS) bin/$(TARGET) -x 512 -y 512 -t 40 --export --export-path ~/ 
+	$(EX) $(EXFLAGS) bin/$(TARGET) -x 512 -y 512 -t 40 --export --export-path ~/ $(MODE)
 
 big_test: rep bin/$(TARGET)
 	$(EX) $(EXFLAGS) bin/$(TARGET) -x 32768 -y 32768 -t 40 $(MODE)
