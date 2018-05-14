@@ -26,10 +26,10 @@ int main(int argc, char **argv) {
 	int mode;
 	
 	if (hybrid)
-		MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mode);
+	    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mode);		
 	else
-		MPI_Init(&argc,&argv);
-			
+	    MPI_Init(&argc,&argv);
+	
 	MPI_Comm_size(MPI_COMM_WORLD,&p);
 	MPI_Comm_rank(MPI_COMM_WORLD,&id);
 	

@@ -140,8 +140,8 @@ void forward(void)
 
     MPI_Request r[3], s[3];
     for (int i = 0; i < 3; i++) {
-	r[i] = MPI_REQUEST_NULL;
-	s[i] = MPI_REQUEST_NULL;
+    	r[i] = MPI_REQUEST_NULL;
+    	s[i] = MPI_REQUEST_NULL;
     }
 
     if (file_export)
@@ -161,23 +161,23 @@ void forward(void)
 
 	if (t > 1) {
 	    if (async) {
-		if (id > 0) {
-		    MPI_Irecv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-			      id - 1, 0, MPI_COMM_WORLD, r);
-		    MPI_Irecv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-			      id - 1, 0, MPI_COMM_WORLD, r + 1);
-		    MPI_Isend(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
-			      id - 1, 0, MPI_COMM_WORLD, s);
-		}
-		if (id < p - 1) {
-		    MPI_Isend(&HPHY(t - 1, 0, band_size_y), band_size_x,
-			      MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 1);
-		    MPI_Isend(&UPHY(t - 1, 0, band_size_y), band_size_x,
-			      MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 2);
-		    MPI_Irecv(&VPHY(t - 1, 0, band_size_y + 1),
-			      band_size_x, MPI_DOUBLE, id + 1, 0,
-			      MPI_COMM_WORLD, r + 2);
-		}
+	    	if (id > 0) {
+	    	    MPI_Irecv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+	    		      id - 1, 0, MPI_COMM_WORLD, r);
+	    	    MPI_Irecv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+	    		      id - 1, 0, MPI_COMM_WORLD, r + 1);
+	    	    MPI_Isend(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
+	    		      id - 1, 0, MPI_COMM_WORLD, s);
+	    	}
+	    	if (id < p - 1) {
+	    	    MPI_Isend(&HPHY(t - 1, 0, band_size_y), band_size_x,
+	    		      MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 1);
+	    	    MPI_Isend(&UPHY(t - 1, 0, band_size_y), band_size_x,
+	    		      MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 2);
+	    	    MPI_Irecv(&VPHY(t - 1, 0, band_size_y + 1),
+	    		      band_size_x, MPI_DOUBLE, id + 1, 0,
+	    		      MPI_COMM_WORLD, r + 2);
+	    	}
 	    }
 	    else {
 		if (id > 0) {
@@ -210,11 +210,10 @@ void forward(void)
 	    end_y -= 1;
 	}
 
-	// PARALLEL OMP
-        #pragma omp parallel for
+	#pragma omp parallel for
 	for (int y = start_y; y < end_y; y++)
-		for (int x = start_x; x < end_x; x++)
-			FORWARD(t, x, y);
+	    for (int x = start_x; x < end_x; x++)
+		FORWARD(t, x, y);
 	   
 	if (async) {
 	    MPI_Waitall(3, r, MPI_STATUSES_IGNORE);
@@ -230,13 +229,12 @@ void forward(void)
 	    
 	if (t == 2)
 	    dt = svdt;
-	
-    
-	if (file_export) {
-	    export_step(t - 1);
-	    finalize_export();
-	}
-	
-	MPI_Barrier(MPI_COMM_WORLD);
     }
+    
+    if (file_export) {
+	export_step(t - 1);
+	finalize_export();
+    }
+    
+    MPI_Barrier(MPI_COMM_WORLD);
 }

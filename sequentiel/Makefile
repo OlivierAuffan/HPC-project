@@ -29,7 +29,7 @@ obj/%.o: src/%.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)
 
 test1: rep bin/$(TARGET)
-	bin/$(TARGET) --export --export-path $(EXPORT_PATH)
+	bin/$(TARGET) -x $(SIZE_TEST) -y $(SIZE_TEST) -t $(T_TEST) --export --export-path $(EXPORT_PATH)
 
 test2: rep bin/$(TARGET)
 	$(EX) $(EXFLAGS) bin/$(TARGET) -x 8192 -y 8192 -t 20
