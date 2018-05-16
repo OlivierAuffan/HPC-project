@@ -3,8 +3,8 @@
 
 #include "shalw.h"
 
-static MPI_File		fh;
-static MPI_Request  request;
+static MPI_File fh;
+static MPI_Request request;
 
 void create_file(void)
 {

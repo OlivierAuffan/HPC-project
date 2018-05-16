@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
+
 #include "export.h"
 #include "forward.h"
 #include "shalw.h"
@@ -112,7 +113,7 @@ double vPhy_forward(int t, int i, int j)
 	      (dissip * VFIL(t - 1, i, j)));
 }
 
-void FORWARD(int t, int i, int j)
+void forward_(int t, int i, int j)
 {
     HPHY(t, i, j) = hPhy_forward(t, i, j);
     HFIL(t, i, j) = hFil_forward(t, i, j);
@@ -124,6 +125,49 @@ void FORWARD(int t, int i, int j)
     VFIL(t, i, j) = vFil_forward(t, i, j);
 }
 
+void mpi_async(int t, MPI_Request r[], MPI_Request s[]) {
+
+    if (id > 0) {
+	MPI_Irecv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+		  id - 1, 0, MPI_COMM_WORLD, r);
+	MPI_Irecv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+		  id - 1, 0, MPI_COMM_WORLD, r + 1);
+	MPI_Isend(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
+		  id - 1, 0, MPI_COMM_WORLD, s);
+    }
+    if (id < p - 1) {
+	MPI_Isend(&HPHY(t - 1, 0, band_size_y), band_size_x,
+		  MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 1);
+	MPI_Isend(&UPHY(t - 1, 0, band_size_y), band_size_x,
+		  MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 2);
+	MPI_Irecv(&VPHY(t - 1, 0, band_size_y + 1),
+		  band_size_x, MPI_DOUBLE, id + 1, 0,
+		  MPI_COMM_WORLD, r + 2);
+    }
+}
+
+void mpi_(int t) {
+    
+    if (id > 0) {
+	MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+		 id - 1, 0, MPI_COMM_WORLD, NULL);
+	MPI_Recv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
+		 id - 1, 0, MPI_COMM_WORLD, NULL);
+	MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
+		 id - 1, 0, MPI_COMM_WORLD);
+    }
+    if (id < p - 1) {
+	MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
+		 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+	MPI_Send(&UPHY(t - 1, 0, band_size_y), band_size_x,
+		 MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
+	MPI_Recv(&VPHY(t - 1, 0, band_size_y + 1),
+		 band_size_x, MPI_DOUBLE, id + 1, 0,
+		 MPI_COMM_WORLD, NULL);
+    }
+}
+	   
+
 // Cette fonction est longue et concentre les versions bandes/blocks
 // sync/async pour factoriser le code et bien comprendre ce que ces modes
 // impliquent sur une version standard. Ne pas hésiter à masquer des boucles
@@ -131,19 +175,18 @@ void FORWARD(int t, int i, int j)
 // de la fonction.
 void forward(void)
 {
-    double svdt	= 0.;
-    int	t = 0;
-
-    MPI_Datatype column;
-    MPI_Type_vector(band_size_y, 1, band_size_x + 2, MPI_DOUBLE, &column);
-    MPI_Type_commit(&column);
-
+    double svdt;
+    int t, start_x, start_y, end_x, end_y;
     MPI_Request r[3], s[3];
+        
+    svdt    = 0.;
+    t       = 0;
+   
     for (int i = 0; i < 3; i++) {
-    	r[i] = MPI_REQUEST_NULL;
-    	s[i] = MPI_REQUEST_NULL;
+	r[i] = MPI_REQUEST_NULL;
+	s[i] = MPI_REQUEST_NULL;
     }
-
+    
     if (file_export)
 	create_file();
     
@@ -152,83 +195,54 @@ void forward(void)
 	    svdt = dt;
 	    dt   = 0;
 	}
-	if (t == 2)
-	    dt = svdt / 2.;
 
-	if (file_export) {
-	    export_step(t - 1);
-	}
+	if (t == 2) dt = svdt / 2.;
 
+	if (file_export) export_step(t - 1);
+	
 	if (t > 1) {
-	    if (async) {
-	    	if (id > 0) {
-	    	    MPI_Irecv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-	    		      id - 1, 0, MPI_COMM_WORLD, r);
-	    	    MPI_Irecv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-	    		      id - 1, 0, MPI_COMM_WORLD, r + 1);
-	    	    MPI_Isend(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
-	    		      id - 1, 0, MPI_COMM_WORLD, s);
-	    	}
-	    	if (id < p - 1) {
-	    	    MPI_Isend(&HPHY(t - 1, 0, band_size_y), band_size_x,
-	    		      MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 1);
-	    	    MPI_Isend(&UPHY(t - 1, 0, band_size_y), band_size_x,
-	    		      MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD, s + 2);
-	    	    MPI_Irecv(&VPHY(t - 1, 0, band_size_y + 1),
-	    		      band_size_x, MPI_DOUBLE, id + 1, 0,
-	    		      MPI_COMM_WORLD, r + 2);
-	    	}
-	    }
-	    else {
-		if (id > 0) {
-		    MPI_Recv(&HPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-			     id - 1, 0, MPI_COMM_WORLD, NULL);
-		    MPI_Recv(&UPHY(t - 1, 0, 0), band_size_x, MPI_DOUBLE,
-			     id - 1, 0, MPI_COMM_WORLD, NULL);
-		    MPI_Send(&VPHY(t - 1, 0, 1), band_size_x, MPI_DOUBLE,
-			     id - 1, 0, MPI_COMM_WORLD);
-		}
-		if (id < p - 1) {
-		    MPI_Send(&HPHY(t - 1, 0, band_size_y), band_size_x,
-			     MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
-		    MPI_Send(&UPHY(t - 1, 0, band_size_y), band_size_x,
-			     MPI_DOUBLE, id + 1, 0, MPI_COMM_WORLD);
-		    MPI_Recv(&VPHY(t - 1, 0, band_size_y + 1),
-			     band_size_x, MPI_DOUBLE, id + 1, 0,
-			     MPI_COMM_WORLD, NULL);
-		}
-	    }
+	    if (async) mpi_async(t, r, s);
+	    else mpi_(t);
 	}
 	
-	int start_x = 0;
-	int start_y = 1;
-	int end_x   = band_size_x;
-	int end_y   = band_size_y + 1;
-	    
+	start_x = 0;
+	start_y = 1;
+	end_x   = band_size_x;
+	end_y   = band_size_y + 1;
+	
 	if (async) {
 	    start_y += 1;
 	    end_y -= 1;
 	}
 
-	#pragma omp parallel for
+
+	// TODO :
+	// mesurer temps normal, async, hybrid, ...
+	// modifier avec if(hybrid) autour du pragma normal
+	// continuer SIMD
+	// commencer le rapport
+	// factorisation de code + retirer coquilles
+	
+	// #pragma omp for
+	#pragma omp simd
 	for (int y = start_y; y < end_y; y++)
 	    for (int x = start_x; x < end_x; x++)
-		FORWARD(t, x, y);
-	   
+		forward_(t, x, y);
+	
 	if (async) {
 	    MPI_Waitall(3, r, MPI_STATUSES_IGNORE);
 
 	    start_x -= 1;
 	    end_x += 1;
 	    for (int x = start_x; x < end_x; x++) {
-		FORWARD(t, x, 1);
-		FORWARD(t, x, band_size_y);
+		forward_(t, x, 1);
+		forward_(t, x, band_size_y);
 	    }
+
 	    MPI_Waitall(3, s, MPI_STATUSES_IGNORE);
 	}
-	    
-	if (t == 2)
-	    dt = svdt;
+	
+	if (t == 2) dt = svdt;
     }
     
     if (file_export) {

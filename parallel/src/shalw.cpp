@@ -55,7 +55,6 @@ int main(int argc, char **argv) {
 	alloc();
 	PRINT("Memory allocated\n");
  
-	// /*elle sert a initialiser l'image*/ 
 	gauss_init();
 	PRINT("State initialised\n");
 	

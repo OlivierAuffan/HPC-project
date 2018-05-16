@@ -4,7 +4,7 @@ SRC:=$(addprefix src/, $(SRC))
 INCLUDE:=include
 TARGET:=shalw
 ARGS:=
-MODE:=--hybrid --async
+MODE:=--async
 NODES:=8
 HOSTFILE:=../hostfile
 SIZE_TEST:=512
@@ -13,8 +13,8 @@ EXPORT_STEP:=1
 TEST_NAME:=shalw_$(SIZE_TEST)x$(SIZE_TEST)_T$(T_TEST)
 
 CXX=mpicxx
-CXXFLAGS=-Wall -Werror -Wextra -O3 -I $(INCLUDE) -fopenmp
-LDFLAGS=-lboost_program_options -lm -fopenmp
+CXXFLAGS=-Wall -Werror -Wextra -O3 -I $(INCLUDE) -fopenmp -march=core-avx2
+LDFLAGS=-lboost_program_options -lm -fopenmp -march=core-avx2
 EX=mpirun
 EXFLAGS=-n $(NODES) -hostfile $(HOSTFILE) --map-by node
 
