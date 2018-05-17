@@ -21,6 +21,20 @@ int band_size_x, band_size_y, band_size;
 int start_band_x, start_band_y, end_band_x, end_band_y;
 int size, buffer_size;
 
+void global_vars_init() {
+    
+	band_size_x = size_x;
+	band_size_y = size_y / p;
+	band_size = band_size_x * band_size_y;
+	
+	start_band_x = 0;
+	start_band_y = id * band_size_y;
+	end_band_x = band_size_x;
+	end_band_y = (id + 1) * band_size_y;
+
+	size = size_x * size_y;
+}
+
 int main(int argc, char **argv) {
 
 	int mode;
@@ -36,21 +50,12 @@ int main(int argc, char **argv) {
 	parse_args(argc, argv);
 	PRINT("Command line options parsed\n");
 
-	if(size_y % p){
-	    PRINT("le nombre de processus ne divise pas la taille\n");
+	if(size_y % p) {
+	    PRINT("Le nombre de processus ne divise pas la taille\n");
 	    exit(EXIT_FAILURE);
 	}
 
-	band_size_x = size_x;
-	band_size_y = size_y / p;
-	band_size = band_size_x * band_size_y;
-	
-	start_band_x = 0;
-	start_band_y = id * band_size_y;
-	end_band_x = band_size_x;
-	end_band_y = (id + 1) * band_size_y;
-
-	size = size_x * size_y;
+	global_vars_init();
 	
 	alloc();
 	PRINT("Memory allocated\n");

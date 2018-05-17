@@ -10,8 +10,6 @@
 
 double hFil_forward(int t, int i, int j)
 {
-    // Phase d'initialisation du filtre
-    // HPHY(t - 1, i, j) est encore nul
     if (t <= 2)
 	return HPHY(t, i, j);
     return HPHY(t - 1, i, j) +
@@ -20,8 +18,6 @@ double hFil_forward(int t, int i, int j)
 
 double uFil_forward(int t, int i, int j)
 {
-    // Phase d'initialisation du filtre
-    // UPHY(t - 1, i, j) est encore nul
     if (t <= 2)
 	return UPHY(t, i, j);
     return UPHY(t - 1, i, j) +
@@ -30,8 +26,6 @@ double uFil_forward(int t, int i, int j)
 
 double vFil_forward(int t, int i, int j)
 {
-    // Phase d'initialisation du filtre
-    // VPHY(t - 1, i, j) est encore nul
     if (t <= 2)
 	return VPHY(t, i, j);
     return VPHY(t - 1, i, j) +
@@ -166,13 +160,7 @@ void mpi_(int t) {
 		 MPI_COMM_WORLD, NULL);
     }
 }
-	   
 
-// Cette fonction est longue et concentre les versions bandes/blocks
-// sync/async pour factoriser le code et bien comprendre ce que ces modes
-// impliquent sur une version standard. Ne pas hésiter à masquer des boucles
-// ou des branchements dans un éditeur de code pour avoir un aperçu global
-// de la fonction.
 void forward(void)
 {
     double svdt;
@@ -187,8 +175,10 @@ void forward(void)
 	s[i] = MPI_REQUEST_NULL;
     }
     
-    if (file_export)
+    if (file_export) {
 	create_file();
+	export_step(t);
+    }
     
     for (t = 1; t < nb_steps; t++) {
 	if (t == 1) {
@@ -198,7 +188,7 @@ void forward(void)
 
 	if (t == 2) dt = svdt / 2.;
 
-	if (file_export) export_step(t - 1);
+	if (file_export) export_step(t);
 	
 	if (t > 1) {
 	    if (async) mpi_async(t, r, s);
@@ -215,19 +205,22 @@ void forward(void)
 	    end_y -= 1;
 	}
 
-
 	// TODO :
 	// mesurer temps normal, async, hybrid, ...
-	// modifier avec if(hybrid) autour du pragma normal
 	// continuer SIMD
 	// commencer le rapport
-	// factorisation de code + retirer coquilles
 	
-	// #pragma omp for
-	#pragma omp simd
-	for (int y = start_y; y < end_y; y++)
-	    for (int x = start_x; x < end_x; x++)
-		forward_(t, x, y);
+	if (hybrid) {
+	    // #pragma omp simd
+#pragma omp for
+	    for (int y = start_y; y < end_y; y++)
+		for (int x = start_x; x < end_x; x++)
+		    forward_(t, x, y);
+	} else {
+	    for (int y = start_y; y < end_y; y++)
+		for (int x = start_x; x < end_x; x++)
+		    forward_(t, x, y);   
+	}
 	
 	if (async) {
 	    MPI_Waitall(3, r, MPI_STATUSES_IGNORE);
@@ -246,7 +239,7 @@ void forward(void)
     }
     
     if (file_export) {
-	export_step(t - 1);
+	export_step(t);
 	finalize_export();
     }
     
