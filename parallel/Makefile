@@ -1,11 +1,11 @@
-SRC:=export.cpp forward.cpp init.cpp memory.cpp parse_args.cpp shalw.cpp
+SRC:=export.cpp forward.cpp forward_utils.cpp init.cpp memory.cpp parse_args.cpp shalw.cpp
 OBJ:=$(addprefix obj/, $(SRC:.cpp=.o))
 SRC:=$(addprefix src/, $(SRC))
 INCLUDE:=include
 TARGET:=shalw
 ARGS:=
-MODE:=--async
-NODES:=8
+MODE:=
+NODES:=1
 HOSTFILE:=../hostfile
 SIZE_TEST:=512
 T_TEST:=40
@@ -13,8 +13,8 @@ EXPORT_STEP:=1
 TEST_NAME:=shalw_$(SIZE_TEST)x$(SIZE_TEST)_T$(T_TEST)
 
 CXX=mpicxx
-CXXFLAGS=-Wall -Werror -Wextra -O3 -I $(INCLUDE) -fopenmp #-march=core-avx2
-LDFLAGS=-lboost_program_options -lm -fopenmp #-march=core-avx2
+CXXFLAGS=-Wall -Werror -Wextra -O3 -I $(INCLUDE) -fopenmp -mavx2
+LDFLAGS=-lboost_program_options -lm -fopenmp -mavx2
 EX=mpirun
 EXFLAGS=-n $(NODES) -hostfile $(HOSTFILE) --map-by node
 

@@ -6,105 +6,19 @@
 
 #include "export.h"
 #include "forward.h"
+#include "forward_utils.h"
 #include "shalw.h"
 
-double hFil_forward(int t, int i, int j)
+void forward_simd(int t, int i, int j)
 {
-    if (t <= 2)
-	return HPHY(t, i, j);
-    return HPHY(t - 1, i, j) +
-	alpha * (HFIL(t - 1, i, j) - 2 * HPHY(t - 1, i, j) + HPHY(t, i, j));
-}
+    HPHY(t, i, j) = hPhy_forward_simd(t, i, j);
+    HFIL(t, i, j) = hFil_forward_simd(t, i, j);
 
-double uFil_forward(int t, int i, int j)
-{
-    if (t <= 2)
-	return UPHY(t, i, j);
-    return UPHY(t - 1, i, j) +
-	alpha * (UFIL(t - 1, i, j) - 2 * UPHY(t - 1, i, j) + UPHY(t, i, j));
-}
+    UPHY(t, i, j) = uPhy_forward_simd(t, i, j);
+    UFIL(t, i, j) = uFil_forward_simd(t, i, j);
 
-double vFil_forward(int t, int i, int j)
-{
-    if (t <= 2)
-	return VPHY(t, i, j);
-    return VPHY(t - 1, i, j) +
-	alpha * (VFIL(t - 1, i, j) - 2 * VPHY(t - 1, i, j) + VPHY(t, i, j));
-}
-
-double hPhy_forward(int t, int i, int j)
-{
-    double c, d;
-
-    c = 0.;
-    if (i > 0)
-	c = UPHY(t - 1, i - 1, j);
-
-    d = 0.;
-    if (j < size_y - 1)
-	d = VPHY(t - 1, i, j + 1);
-
-    return HFIL(t - 1, i, j) -
-	dt * hmoy *
-	((UPHY(t - 1, i, j) - c) / dx + (d - VPHY(t - 1, i, j)) / dy);
-}
-
-double uPhy_forward(int t, int i, int j)
-{
-    double b, e, f, g;
-
-    if (i == size_x - 1)
-	return 0.;
-
-    b = 0.;
-    if (i < size_x - 1)
-	b = HPHY(t - 1, i + 1, j);
-
-    e = 0.;
-    if (j < size_y - 1)
-	e = VPHY(t - 1, i, j + 1);
-
-    f = 0.;
-    if (i < size_x - 1)
-	f = VPHY(t - 1, i + 1, j);
-
-    g = 0.;
-    if (i < size_x - 1 && j < size_y - 1)
-	g = VPHY(t - 1, i + 1, j + 1);
-
-    return UFIL(t - 1, i, j) +
-	    dt * ((-grav / dx) * (b - HPHY(t - 1, i, j)) +
-		  (pcor / 4.) * (VPHY(t - 1, i, j) + e + f + g) -
-		  (dissip * UFIL(t - 1, i, j)));
-}
-
-double vPhy_forward(int t, int i, int j)
-{
-    double c, d, e, f;
-
-    if (j == 0)
-	return 0.;
-
-    c = 0.;
-    if (j > 0)
-	c = HPHY(t - 1, i, j - 1);
-
-    d = 0.;
-    if (i > 0 && j > 0)
-	d = UPHY(t - 1, i - 1, j - 1);
-
-    e = 0.;
-    if (i > 0)
-	e = UPHY(t - 1, i - 1, j);
-
-    f = 0.;
-    if (j > 0)
-	f = UPHY(t - 1, i, j - 1);
-
-    return VFIL(t - 1, i, j) +
-	dt * ((-grav / dy) * (HPHY(t - 1, i, j) - c) -
-	      (pcor / 4.) * (d + e + f + UPHY(t - 1, i, j)) -
-	      (dissip * VFIL(t - 1, i, j)));
+    VPHY(t, i, j) = vPhy_forward_simd(t, i, j);
+    VFIL(t, i, j) = vFil_forward_simd(t, i, j);
 }
 
 void forward_(int t, int i, int j)
@@ -207,19 +121,40 @@ void forward(void)
 
 	// TODO :
 	// mesurer temps normal, async, hybrid, ...
-	// continuer SIMD
 	// commencer le rapport
-	
-	if (hybrid) {
-	    // #pragma omp simd
+
+	if (t <= 2) {
+	    if (hybrid) {
 #pragma omp for
-	    for (int y = start_y; y < end_y; y++)
-		for (int x = start_x; x < end_x; x++)
-		    forward_(t, x, y);
+		for (int y = start_y; y < end_y; y++)
+		    for (int x = start_x; x < end_x; x++)
+			forward_(t, x, y);
+	    } else {
+		for (int y = start_y; y < end_y; y++)
+		    for (int x = start_x; x < end_x; x++)
+			forward_(t, x, y);   
+	    }
+	    
 	} else {
-	    for (int y = start_y; y < end_y; y++)
-		for (int x = start_x; x < end_x; x++)
-		    forward_(t, x, y);   
+
+	    if (hybrid) {
+#pragma omp for
+		for (int y = start_y; y < end_y; y++)
+		    for (int x = start_x; x < end_x; x++)
+			if (x == 0 || x == size_x - 1 ||
+			    y == 0 || y == size_y - 1)
+			    forward_(t, x, y);
+			else
+			    forward_simd(t, x, y);				
+	    } else {
+		for (int y = start_y; y < end_y; y++)
+		    for (int x = start_x; x < end_x; x++)
+			if (x == 0 || x == size_x - 1 ||
+			    y == 0 || y == size_y - 1)
+			    forward_(t, x, y);
+			else
+			    forward_simd(t, x, y);				
+	    }
 	}
 	
 	if (async) {
