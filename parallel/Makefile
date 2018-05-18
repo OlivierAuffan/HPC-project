@@ -1,11 +1,11 @@
-SRC:=export.cpp forward.cpp forward_utils.cpp init.cpp memory.cpp parse_args.cpp shalw.cpp
+SRC:=export.cpp forward.cpp init.cpp memory.cpp parse_args.cpp shalw.cpp
 OBJ:=$(addprefix obj/, $(SRC:.cpp=.o))
 SRC:=$(addprefix src/, $(SRC))
 INCLUDE:=include
 TARGET:=shalw
 ARGS:=
-MODE:=
-NODES:=1
+MODE:=--hybrid
+NODES:=8
 HOSTFILE:=../hostfile
 SIZE_TEST:=512
 T_TEST:=40
